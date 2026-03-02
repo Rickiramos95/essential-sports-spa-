@@ -1,1 +1,29 @@
-<!DOCTYPE html><html><body><h1>Essential Sports Spa</h1><p>Site is working!</p></body></html>
+// ─ CHAT ─
+function openChat(){document.getElementById("chatFab").style.display="none";document.getElementById("chatWin").classList.add("open");renderChat()}
+function closeChat(){document.getElementById("chatFab").style.display="flex";document.getElementById("chatWin").classList.remove("open")}
+function renderChat(){
+  const el=document.getElementById("chatMsgs");if(!el)return;
+  el.innerHTML=msgs.map(m=>`<div class="chat-m ${m.r==='u'?'u':'b'}">${m.t}</div>`).join("")+(chatBusy?'<div class="chat-m b"><div class="chat-dots"><span></span><span></span><span></span></div></div>':'');
+  el.scrollTop=el.scrollHeight;
+}
+async function sendMsg(){
+  const inp=document.getElementById("chatIn");if(!inp.value.trim()||chatBusy)return;
+  const t=inp.value.trim();inp.value="";msgs.push({r:"u",t});chatBusy=true;renderChat();
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:600,system:"You are the wellness advisor for Essential Sports Spa, a premium mobile massage service. Recommend treatments based on symptoms. Services: Swedish($180+), Sports($180+), Deep Tissue($180+), Prenatal($180+), Aroma Therapy($180+), CBD Treatment($180+). 60min/$180, 90min/$230, 120min/$280. Be warm, concise (2 short paragraphs max), professional.",messages:msgs.filter(m=>m.r!=='b'||msgs.indexOf(m)>0).map(m=>({role:m.r==='u'?'user':'assistant',content:m.t}))})});
+    const d=await res.json();msgs.push({r:"b",t:d.content?.map(c=>c.text||"").join("")||"Could you try again?"});
+  }catch{msgs.push({r:"b",t:"Connection issue — please try again."})}
+  chatBusy=false;renderChat();
+}
+
+// ─ TOAST ─
+function toast(m){const t=document.getElementById("toast");document.getElementById("toastTxt").textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",4500)}
+
+// ─ REVEAL ─
+function initObs(){
+  const ob=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add("vis")})},{threshold:.05,rootMargin:"0px 0px -20px 0px"});
+  document.querySelectorAll(".reveal").forEach(el=>ob.observe(el));
+}
+</script>
+</body>
+</html>
